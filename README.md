@@ -1,5 +1,5 @@
 # Twitch - стриминговый сервис
-## Тема и целевая уудитория
+## Тема и целевая аудитория
 
 ### Функционал MVP:
 - Регистрация/авторизация
@@ -49,12 +49,10 @@
 
 
 
-### Список источников
+## Список источников
 [^1]: https://help.twitch.tv/s/article/video-on-demand 
 [^2]: https://resourcera.com/data/social/twitch-statistics/
 [^3]: https://twitchtracker.com/
 [^4]: https://www.demandsage.com/twitch-users/
 [^5]: https://analyzify.com/statsup/twitch#user-audience
 [^6]: https://www.statista.com/statistics/511558/twitch-traffic-by-country/
-
-## Целевая аудитория
