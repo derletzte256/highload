@@ -22,7 +22,7 @@
 #### Метрики
 - 240M MAU [^2]
 - 35M DAU [^2]
-- Стреднее количество одновременных зрителей - 2.3М [^4]
+- Стреднее количество одновременных зрителей в августе 2025 - 2М [^3]
 - Количество часов просмотра в августе 2025 - 1498М [^3]
 - Количество стримеров в августе 2025 - 7М [^3]
 - Среднее количество одновременных стримов за август 2025 - 89K [^3]
@@ -54,6 +54,5 @@
 [^1]: https://help.twitch.tv/s/article/video-on-demand 
 [^2]: https://resourcera.com/data/social/twitch-statistics/
 [^3]: https://twitchtracker.com/
-[^4]: https://www.demandsage.com/twitch-users/
 [^5]: https://analyzify.com/statsup/twitch#user-audience
 [^6]: https://www.statista.com/statistics/511558/twitch-traffic-by-country/
