@@ -49,8 +49,7 @@
 
 
 
-## Список источников
-
+### Список источников
 [^1]: https://help.twitch.tv/s/article/video-on-demand 
 [^2]: https://resourcera.com/data/social/twitch-statistics/
 [^3]: https://twitchtracker.com/
