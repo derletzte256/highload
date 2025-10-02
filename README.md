@@ -202,7 +202,7 @@
 ### Рассчет необходимого количества балансировщиков
 Допущения:
 - L4 балансировщик имеет пропускную способность 100 Гбит/c (для 100GbE сетевой карты)
-- одного L7 балансировщика достаточно для имеющегося RPS для обычных запросов + 1 для отказоустойчивости
+- одного L7 балансировщика достаточно для имеющегося RPS для обычных запросов [^11] + 1 для отказоустойчивости
 
 | Расположение ДЦ   | Регион        | Гбит/с | N (L4) | N (L7) |
 | ----------------- | ------------- | -----  | ----- | --- |
@@ -241,3 +241,4 @@
 [^8]: https://stats.streamelements.com/c/global
 [^9]: https://help.twitch.tv/s/article/guide-to-custom-messages?language=ru
 [^10]: https://help.twitch.tv/s/article/moments?language=ru
+[^11]: https://blog.nginx.org/blog/testing-the-performance-of-nginx-and-nginx-plus-web-servers
