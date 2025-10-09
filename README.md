@@ -239,10 +239,19 @@
 | email (255 Б)       | user_id (16 Б)         | channel_id (16 Б) | stream_id (16 Б)          | channel_id (16 Б)  | stream_id (16 Б)  | kind (1 Б)           | playlist_media_id (16 Б) | creator_id (16 Б)     |
 | username (32 Б)     | display_name (128 Б)   | title (128 Б)     | ingest_point (16 Б)       | created_at (8 Б)   | user_id (16 Б)    | storage_url (200 Б)  | stream_id (16 Б)        | stream_id (16 Б)      |
 | pass_hash (60 Б)    | stream_key_hash (60 Б) | status (1 Б)      | encoder_ip (16 Б)         |                    | offset_ms (8 Б)   | size_bytes (8 Б)     | playlist_media_id (16 Б) | start_ms (4 Б)        |
-| created_at (8 Б)    | is_partner (1 Б)       | started_at (8 Б)  | presented_key_hash (60 Б) |                    | content (280 Б)  | checksum (32 Б)      | duration_sec (4 Б)       | duration_ms (4 Б)     |
+| created_at (8 Б)    | is_partner (1 Б)       | started_at (8 Б)  | presented_key_hash (60 Б) |                    | content (280 Б)  | checksum (32 Б)       | duration_sec (4 Б)       | duration_ms (4 Б)     |
 | last_login_at (8 Б) | avatar_media_id (16 Б) | ended_at (8 Б)    | encoder_cfg (JSON, 64 Б)  |                    | meta (JSON, 64 Б) | extra (JSON, 64 Б)   | total_size_bytes (8 Б)   | video_media_id (16 Б) |
 |                     | banner_media_id (16 Б) | vod_enabled (1 Б) | started_at (8 Б)          |                    | created_at (8 Б)  | created_at (8 Б)     | created_at (8 Б)         | thumb_media_id (16 Б) |
 |                     | created_at (8 Б)       | tags (JSON, 64 Б) | ended_at (8 Б)            |                    |                   | ttl_expires_at (8 Б) |                          | created_at (8 Б)      |
+
+
+| CHANNEL_COUNTERS      | STREAM_COUNTERS     | VOD_COUNTERS         | CLIP_COUNTERS     |
+| --------------------- | ------------------- | -------------------- | ----------------- |
+| channel_id (16 Б)     | stream_id (16 Б)    | vod_asset_id (16 Б)  | clip_id (16 Б)    |
+| followers_count (8 Б) | chat_messages (8 Б) | views_total (8 Б)    | views_total (8 Б) |
+| updated_at (8 Б)      | viewers (4 Б)       | watch_time_sec (8 Б) | updated_at (8 Б)  |
+|                       | updated_at (8 Б)    | updated_at (8 Б)     |                   |
+
 
 
 ### Рассчеты для таблиц
@@ -257,6 +266,11 @@
 | VOD_ASSET           |       84 Б |          500K |    42 МБ | VOD создают 50% стримов                                                           |
 | CLIP             |       96 Б |        5M |   480 МБ | 5M клипов/сутки                                                                   |
 | MEDIA_OBJECT       |      337 Б |      11M |  3.7 ГБ | Оценка: 2 на VOD (плейлист+превью) 1M/сутки + 2 на клип (видео+превью) 10M/сутки |
+| CHANNEL_COUNTERS |       32 Б |                 500K |         16 МБ | 1 запись на канал; рост = новые каналы; инкременты не увеличивают размер      |
+| STREAM_COUNTERS  |       36 Б |                   1M |         36 МБ | 1 запись на стрим; рост = новые стримы; апдейты «онлайна/чата» перезаписывают |
+| VOD_COUNTERS     |       40 Б |                 500K |         20 МБ | 1 запись на VOD; рост = новые VOD                                             |
+| CLIP_COUNTERS    |       32 Б |                   5M |        160 МБ | 1 запись на клип; рост = новые клипы                                          |
+
 
 TTL/накопление: VOD и чат-реплей живут до 60 дней; клипы — бессрочно. \
 В хранилище из-за TTL: VOD_ASSET = 30M -> 2.5 ГБ метаданных; CHAT_MESSAGE = 4.2B -> 1.71 TB; MEDIA_OBJECT (только VOD-связанные, 2/стрим) = 60M -> 20 ГБ. Клип-объекты копятся без TTL 10M/сутки.
@@ -273,10 +287,16 @@ TTL/накопление: VOD и чат-реплей живут до 60 дней
 | VOD_ASSET           |           0.1 |              6 | R: 10 -> 0.1 (при промахе 1%) |
 | CLIP                |            1 |             60 | R: 100 -> 1 (при промахе 1%)  |
 | MEDIA_OBJECT        |           2 |             120 | W: 2 на VOD + 2 на клип, R: 200 -> 2 (при промахе 1%) |
+| CHANNEL_COUNTERS |       5 |       - |  |
+| STREAM_COUNTERS  |        5 |       - |            |
+| VOD_COUNTERS     |      0.1 |        - |         |
+| CLIP_COUNTERS    |        1 |       - |                 |
+
 
 ### Требования консистентности
 - Операции создания пользователя + канала и стрима + RTMP сессии должны быть атомарными. Аналогично для счетчиков.
 - Счетчики онлайна/подписок/просмотров обновляются раз в какое-то время (например раз в минуту)
+- По истеченнию времени хранения данные MEDIA_OBJECT удаляются
 
 
 
