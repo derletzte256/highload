@@ -228,6 +228,9 @@
 | Сингапур          | Азия          |    305 | 4 | 2 |
 | Сидней            | Океания       |    305 | 4 | 2 |
 
+## 5. Логическая схема БД
+
+<img width="1234" height="860" alt="Untitled" src="https://github.com/user-attachments/assets/d6d2307f-234a-44f3-b13c-5208e8e27822" />
 
 
  
