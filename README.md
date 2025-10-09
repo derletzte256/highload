@@ -232,6 +232,20 @@
 
 <img width="1234" height="860" alt="Untitled" src="https://github.com/user-attachments/assets/d6d2307f-234a-44f3-b13c-5208e8e27822" />
 
+### Размеры полей
+| USER_ACCOUNT        | CHANNEL                | STREAM            | RTMP_INGEST_SESSION       | SUBSCRIPTION       | CHAT_MESSAGE      | MEDIA_OBJECT         | VOD_ASSET                | CLIP                  |
+| ------------------- | ---------------------- | ----------------- | ------------------------- | ------------------ | ----------------- | -------------------- | ------------------------ | --------------------- |
+| id (16 B)           | id (16 B)      | id (16 B)      | id (16 B)        | follower_id (16 B) | id (16 B)         | id (16 B)      | id (16 B)           | id (16 B)             |
+| email (255 B)       | user_id (16 B)     | channel_id (16 B) | stream_id (16 B)     | channel_id (16 B)  | stream_id (16 B)  | kind (1 B)           | stream_id (16 B)      | stream_id (16 B)      |
+| username (32 B)     | display_name (128 B)   | title (128 B)     | ingest_point (16 B)   | created_at (8 B)   | user_id (16 B)    | storage_url (200 B)  | playlist_media_id (16 B) | creator_id (16 B)     |
+| pass_hash (60 B)    | stream_key_hash (60 B) | status (1 B)      | encoder_ip (16 B)         |       | offset_ms (8 B)   | size_bytes (8 B)     | thumb_media_id (16 B)    | start_ms (4 B)        |
+| created_at (8 B)    | is_partner (1 B)    | started_at (8 B)  | presented_key_hash (60 B) |     | content (≈280 B)  | checksum (32 B)      | duration_sec (4 B)       | duration_ms (4 B)     |
+| last_login_at (8 B) | avatar_media_id (16 B) | ended_at (8 B)    | encoder_cfg (JSON, 64 B)  |    | meta (JSON, 64 B) | extra (JSON, 64 B)   | total_size_bytes (8 B)   | video_media_id (16 B) |
+|                     | banner_media_id (16 B) | vod_enabled (1 B) | started_at (8 B)          |      | created_at (8 B)  | created_at (8 B)     | created_at (8 B)         | thumb_media_id (16 B) |
+|                     | created_at (8 B)       | tags (JSON, 64 B) | ended_at (8 B)            |      |      | ttl_expires_at (8 B) |              | created_at (8 B)  |
+
+
+
 
  
 ## Список источников
