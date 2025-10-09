@@ -273,7 +273,7 @@
 
 
 TTL/накопление: VOD и чат-реплей живут до 60 дней; клипы — бессрочно. \
-В хранилище из-за TTL: VOD_ASSET = 30M -> 2.5 ГБ метаданных; CHAT_MESSAGE = 4.2B -> 1.71 TB; MEDIA_OBJECT (только VOD-связанные, 2/стрим) = 60M -> 20 ГБ. Клип-объекты копятся без TTL 10M/сутки.
+В хранилище из-за TTL: VOD_ASSET = 30M -> 2.5 ГБ метаданных; CHAT_MESSAGE = 408 Б -> 1.71 TB; MEDIA_OBJECT (только VOD-связанные, 2/стрим) = 60M -> 20 ГБ. Клип-объекты копятся без TTL 10M/сутки.
 
 ### QPS
 | Cущность                  | Read QPS | Write QPS | Примечания |
@@ -299,8 +299,6 @@ TTL/накопление: VOD и чат-реплей живут до 60 дней
 - По истеченнию времени хранения данные MEDIA_OBJECT удаляются
 
 
-
- 
 ## Список источников
 [^1]: https://help.twitch.tv/s/article/video-on-demand 
 [^2]: https://resourcera.com/data/social/twitch-statistics/
