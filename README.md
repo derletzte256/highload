@@ -230,7 +230,7 @@
 
 ## 5. Логическая схема БД
 
-<img width="1234" height="860" alt="Untitled" src="https://github.com/user-attachments/assets/d6d2307f-234a-44f3-b13c-5208e8e27822" />
+<img width="1260" height="1070" alt="Untitled (1)" src="https://github.com/user-attachments/assets/b9a909d0-1348-42f3-94cd-256633543fa2" />
 
 ### Размеры полей
 | USER_ACCOUNT        | CHANNEL                | STREAM            | RTMP_INGEST_SESSION       | SUBSCRIPTION       | CHAT_MESSAGE      | MEDIA_OBJECT         | VOD_ASSET                | CLIP                  |
