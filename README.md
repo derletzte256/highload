@@ -245,20 +245,21 @@
 |                     | created_at (8 B)       | tags (JSON, 64 B) | ended_at (8 B)            |      |      | ttl_expires_at (8 B) |              | created_at (8 B)  |
 
 ### Рассчеты для таблиц
-| Сущность                | Вес записи | Строк/сутки (оценка) | Прирост/сутки | Примечания                                                                         |
-| ----------------------- | ---------: | -------------------: | ------------: | ---------------------------------------------------------------------------------- |
-| **USER_ACCOUNT**        |      379 B |          **500 000** | **~189.5 MB** | Регистрации/день (~0.5M)                                                           |
-| **CHANNEL**             |      261 B |          **500 000** | **~130.5 MB** | Канал на пользователя                                                              |
-| **SUBSCRIPTION**        |       40 B |       **60 000 000** |  **~2.40 GB** | 60M подписок/сутки                                                                 |
-| **STREAM**              |      242 B |        **1 000 000** |   **~242 MB** | Созданий стримов/сутки                                                             |
-| **RTMP_INGEST_SESSION** |      204 B |        **1 000 000** |   **~204 MB** | По одной+ на стрим                                                                 |
-| **CHAT_MESSAGE**        |      408 B |       **70 000 000** | **~28.56 GB** | ≤255 симв., JSON-мета                                                              |
-| **VOD_ASSET**           |       84 B |          **500 000** |    **~42 MB** | VOD создают ~50% стримов                                                           |
-| **CLIP**                |       96 B |        **5 000 000** |   **~480 MB** | ~5M клипов/сутки                                                                   |
-| **MEDIA_OBJECT**        |      337 B |      **≈11 000 000** |  **~3.71 GB** | Оценка: 2 на VOD (плейлист+превью) ≈1M/сутки + 2 на клип (видео+превью) ≈10M/сутки |
+| Сущность                | Вес записи | Строк/сутки | Прирост/сутки | Примечания                                                                         |
+| USER_ACCOUNT        | CHANNEL                | STREAM            | RTMP_INGEST_SESSION       | SUBSCRIPTION       | CHAT_MESSAGE      | MEDIA_OBJECT         | VOD_ASSET                | CLIP                  |
+| ------------------- | ---------------------- | ----------------- | ------------------------- | ------------------ | ----------------- | -------------------- | ------------------------ | --------------------- |
+| id (16 Б)           | id (16 Б)              | id (16 Б)         | id (16 Б)                 | follower_id (16 Б) | id (16 Б)         | id (16 Б)            | id (16 Б)               | id (16 Б)            |
+| email (255 Б)       | user_id (16 Б)         | channel_id (16 Б) | stream_id (16 Б)          | channel_id (16 Б)  | stream_id (16 Б)  | kind (1 Б)           | playlist_media_id (16 Б) | creator_id (16 Б)     |
+| username (32 Б)     | display_name (128 Б)   | title (128 Б)     | ingest_point (16 Б)       | created_at (8 Б)   | user_id (16 Б)    | storage_url (200 Б)  | stream_id (16 Б)        | stream_id (16 Б)      |
+| pass_hash (60 Б)    | stream_key_hash (60 Б) | status (1 Б)      | encoder_ip (16 Б)         |                    | offset_ms (8 Б)   | size_bytes (8 Б)     | playlist_media_id (16 Б) | start_ms (4 Б)        |
+| created_at (8 Б)    | is_partner (1 Б)       | started_at (8 Б)  | presented_key_hash (60 Б) |                    | content (≈280 Б)  | checksum (32 Б)      | duration_sec (4 Б)       | duration_ms (4 Б)     |
+| last_login_at (8 Б) | avatar_media_id (16 Б) | ended_at (8 Б)    | encoder_cfg (JSON, 64 Б)  |                    | meta (JSON, 64 Б) | extra (JSON, 64 Б)   | total_size_bytes (8 Б)   | video_media_id (16 Б) |
+|                     | banner_media_id (16 Б) | vod_enabled (1 Б) | started_at (8 Б)          |                    | created_at (8 Б)  | created_at (8 Б)     | created_at (8 Б)         | thumb_media_id (16 Б) |
+|                     | created_at (8 Б)       | tags (JSON, 64 Б) | ended_at (8 Б)            |                    |                   | ttl_expires_at (8 Б) |                          | created_at (8 Б)      |
 
-TTL/накопление: VOD и чат-реплей живут до 60 дней; клипы — бессрочно.
-• В хранилище из-за TTL: VOD_ASSET ≈ 30M шт ⇒ ~2.52 GB метаданных; CHAT_MESSAGE ≈ 4.2B ⇒ ~1.71 TB; MEDIA_OBJECT (только VOD-связанные, 2/стрим) ≈ 60M ⇒ ~20.22 GB. Клип-объекты копятся без TTL (≈10M/сутки).
+
+TTL/накопление: VOD и чат-реплей живут до 60 дней; клипы — бессрочно. \
+В хранилище из-за TTL: VOD_ASSET = 30M -> 2.5 ГБ метаданных; CHAT_MESSAGE = 4.2B -> 1.71 TB; MEDIA_OBJECT (только VOD-связанные, 2/стрим) = 60M -> 20 ГБ. Клип-объекты копятся без TTL 10M/сутки.
 
 
 
