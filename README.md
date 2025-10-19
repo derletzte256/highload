@@ -281,20 +281,20 @@ TTL/накопление: VOD и чат-реплей живут до 60 дней
 ### QPS и консистентность
 | Cущность            | Read QPS | Write QPS | Консистентность |                                    Примечания |
 | ------------------- | -------: | --------: | --------------- | --------------------------------------------: |
-| USER_ACCOUNT        |       60 |         6 | **strong**      |                                               |
-| CHANNEL             |        5 |         6 | **causal**      |           В основном кэш 550 -> 5 (промах 1%) |
-| SUBSCRIPTION        |      100 |       700 | **strong**      |                                               |
-| STREAM              |        5 |        12 | **strong**      |                            Аналогично каналам |
-| RTMP_INGEST_SESSION |        – |        12 | **strong**      |                                               |
-| CHAT_MESSAGE        |       10 |       810 | **causal**      |                лайв в буфере; R: для VOD 1М |
-| VOD_ASSET           |      0.1 |         6 | **eventual**    |                      R: 10 -> 0.1 (промах 1%) |
-| CLIP                |        1 |        60 | **causal**      |                       R: 100 -> 1 (промах 1%) |
-| MEDIA_OBJECT        |        2 |       120 | **strong**      |         W: 2 на VOD + 2 на клип; R промах 1% |
-| CHANNEL_COUNTERS    |        5 |         – | **eventual**    |                                               |
-| STREAM_COUNTERS     |        5 |         – | **eventual**    |                                               |
-| VOD_COUNTERS        |      0.1 |         – | **eventual**    |                                               |
-| CLIP_COUNTERS       |        1 |         – | **eventual**    |                                               |
-| SESSION             |        5 |        64 | **strong**      | Чтение из кэша/JWT; БД — создание |
+| USER_ACCOUNT        |       60 |         6 | strong      |                                               |
+| CHANNEL             |        5 |         6 | causal    |           В основном кэш 550 -> 5 (промах 1%) |
+| SUBSCRIPTION        |      100 |       700 | strong   |                                               |
+| STREAM              |        5 |        12 | strong   |                            Аналогично каналам |
+| RTMP_INGEST_SESSION |        – |        12 | strong    |                                               |
+| CHAT_MESSAGE        |       10 |       810 | causal    |                лайв в буфере; R: для VOD 1М |
+| VOD_ASSET           |      0.1 |         6 | eventual  |                      R: 10 -> 0.1 (промах 1%) |
+| CLIP                |        1 |        60 | causal     |                       R: 100 -> 1 (промах 1%) |
+| MEDIA_OBJECT        |        2 |       120 | strong  |         W: 2 на VOD + 2 на клип; R промах 1% |
+| CHANNEL_COUNTERS    |        5 |         – | eventual  |                                               |
+| STREAM_COUNTERS     |        5 |         – | eventual  |                                               |
+| VOD_COUNTERS        |      0.1 |         – | eventual  |                                               |
+| CLIP_COUNTERS       |        1 |         – | eventual  |                                               |
+| SESSION             |        5 |        64 | strong     | Чтение из кэша/JWT; БД — создание |
 
 ## Физическая схема БД
 <img width="2172" height="1454" alt="бд" src="https://github.com/user-attachments/assets/a75e9c07-2850-4ede-8ae5-2d4c0eca0634" />
@@ -312,12 +312,12 @@ TTL/накопление: VOD и чат-реплей живут до 60 дней
 | SUBSCRIPTION       | Postgres          | hash(channel_id); per-shard sync standby        | pgbouncer + read-only реплики              | PITR: ежедневный base + WAL в S3 (CRR)                    |
 | STREAM             | Postgres           | range(started_at месяц)                             | pgbouncer + read-only реплики            | PITR: ежедневный base + WAL в S3 (CRR)                   |
 | RTMP_INGEST_SESSION | Postgres           | range(created_at день); авто-TTL 1–7 д                | pgbouncer                                   | PITR: ежедневный base + WAL в S3 (CRR)                    |
-| CHAT_MESSAGE        | ScyllaDB           | partition(stream_id); RF = 3; multi-DC                  | token-aware, DC-aware round-robin           | snapshots + incremental sstables в S3                    |
+| CHAT_MESSAGE        | ScyllaDB           | partition(stream_id); RF = 3;             | token-aware, DC-aware round-robin           | snapshots + incremental sstables в S3                    |
 | VOD_ASSET           | Postgres           | range(created_at неделя); TTL 7–60 д                  | pgbouncer + ro реплики                      | PITR: ежедневный base + WAL в S3 (CRR)                    |
 | CLIP                | Postgres           | hash(stream_id)                                       | pgbouncer + ro реплики                      | PITR: ежедневный base + WAL в S3 (CRR)                    |
 | MEDIA_OBJECT        | Postgres + S3      | S3: versioning + CRR;                         | DB: pgbouncer + ro; Blob: CDN               | DB: PITR; S3 lifecycle 60 д -> Glacier + CRR              |
-| SESSION             | Postgres           | range(expires_at день)                          | pgbouncer                                   | PITR: ежедневный base + WAL в S3 (CRR)                 |
-| CHANNEL_COUNTERS    | Redis              | Redis Cluster; 1 реплика/шард                    | client-side routing                         | RDB hourly + AOF 1s -> S3                               |
+| SESSION             | Postgres           | range(expires_at день)| pgbouncer                                   | PITR: ежедневный base + WAL в S3 (CRR)                 |
+| CHANNEL_COUNTERS    | Redis              | Redis Cluster; 1 реплика/шард             | client-side routing                         | RDB hourly + AOF 1s -> S3                               |
 | STREAM_COUNTERS     | Redis + ClickHouse | Redis Cluster; CH: 2 шарда, 2 реплики (ReplicatedMT) | Redis: client-side; CH: Distributed таблица | Redis: RDB/AOF -> S3; CH: clickhouse-backup в S3 ежедневно |
 | VOD_COUNTERS        | Redis + ClickHouse | Redis Cluster; CH: 2 шарда, 2 реплики (ReplicatedMT) | Redis: client-side; CH: Distributed таблица | Redis: RDB/AOF -> S3; CH: clickhouse-backup в S3 ежедневно |
 | CLIP_COUNTERS       | Redis + ClickHouse | Redis Cluster; CH: 2 шарда, 2 реплики (ReplicatedMT) | Redis: client-side; CH: Distributed таблица | Redis: RDB/AOF -> S3; CH: clickhouse-backup в S3 ежедневно |
@@ -332,12 +332,34 @@ TTL/накопление: VOD и чат-реплей живут до 60 дней
 - token-aware, DC-aware round-robin - посылки запрсов на нужный узел и распределение по round-robin в ДЦ
 - Glacier - переводим в ходное хранилище спустя 60 дней. При нехватке места можно будет удалить
 
+### Индексы
+| название таблицы                      | индексы                                                                                 |
+| ------------------------------------- | --------------------------------------------------------------------------------------- |
+| USER_ACCOUNT (Postgres)               | pk(id); unique(lower(email)); unique(username)                      |
+| CHANNEL (Postgres)                    | pk(id); unique(user_id); unique(stream_key_hash)                        |
+| SUBSCRIPTION (Postgres)               | pk(follower_id, channel_id); btree(channel_id)                  |
+| STREAM (Postgres)                     | pk(id); btree(channel_id, started_at desc); partial btree(status) where status = 'live' |
+| RTMP_INGEST_SESSION (Postgres)        | pk(id); btree(stream_id); partial btree(ended_at) where ended_at is null          |
+| CHAT_MESSAGE (ScyllaDB)               | primary key ((stream_id), offset_ms, id)              |
+| VOD_ASSET (Postgres)                  | pk(id); unique(stream_id)                            |
+| CLIP (Postgres)                       | pk(id); btree(stream_id, created_at desc)                               |
+| MEDIA_OBJECT (Postgres+S3)            | pk(id); unique(storage_url); btree(ttl_expires_at)                 |
+| SESSION (Postgres)                    | pk(id); btree(user_id); btree(expires_at)    |
+| CHANNEL_COUNTERS (Redis + ClickHouse) |  -   |
+| STREAM_COUNTERS (Redis + ClickHouse)  |  -               |
+| VOD_COUNTERS (Redis + ClickHouse)     |  -                                        |
+| CLIP_COUNTERS (Redis + ClickHouse)    |  -                                                |
 
 
+### Денормалиация
+Все счетчики денормализированы по отношению к текущим данных и агрегируются раз в час
 
-
-
-
+### Библиотеки
+- pgx - PostgreSQL
+- gocql - ScyllaDB
+- go-redis - Redis
+- clickhouse-go - ClickHouse
+- aws-sdk-go/s3 - S3
 
 ## Список источников
 [^1]: https://help.twitch.tv/s/article/video-on-demand 
