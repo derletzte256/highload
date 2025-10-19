@@ -296,6 +296,32 @@ TTL/накопление: VOD и чат-реплей живут до 60 дней
 | CLIP_COUNTERS       |        1 |         – | **eventual**    |                                               |
 | SESSION             |        5 |        64 | **strong**      | Чтение из кэша/JWT; БД — создание |
 
+## Физическая схема БД
+<img width="2172" height="1454" alt="бд" src="https://github.com/user-attachments/assets/a75e9c07-2850-4ede-8ae5-2d4c0eca0634" />
+
+Черный - PostgreSQL
+Фиолетовый - ScyllaDB
+Зеленый - S3
+Оранжевый - Redis
+Голубой - Clickhouse
+
+| название таблицы    | база данных        | шардирование и резервирование                         | балансировка запросов                       | схема резервного копирования                              |
+| ------------------- | ------------------ | ----------------------------------------------------- | ------------------------------------------- | --------------------------------------------------------- |
+| USER_ACCOUNT        | Postgres           |                                                       | pgbouncer + ro реплики                      | PITR: ежедневный base + WAL в S3 (CRR)                    |
+| CHANNEL             | Postgres           |                                                       | pgbouncer + ro реплики                      | PITR: ежедневный base + WAL в S3 (CRR)                    |
+| SUBSCRIPTION        | Postgres           | hash(channel_id); per-shard sync standby              | pgbouncer + ro реплики                      | PITR: ежедневный base + WAL в S3 (CRR)                    |
+| STREAM              | Postgres           | range(started_at месяц)                               | pgbouncer + ro реплики                      | PITR: ежедневный base + WAL в S3 (CRR)                    |
+| RTMP_INGEST_SESSION | Postgres           | range(created_at день); авто-TTL 1–7 д                | pgbouncer                                   | PITR: ежедневный base + WAL в S3 (CRR)                    |
+| CHAT_MESSAGE        | ScyllaDB           | partition(stream_id); RF=3; multi-DC                  | token-aware, DC-aware round-robin           | snapshots + incremental sstables в S3                     |
+| VOD_ASSET           | Postgres           | range(created_at неделя); TTL 7–60 д                  | pgbouncer + ro реплики                      | PITR: ежедневный base + WAL в S3 (CRR)                    |
+| CLIP                | Postgres           | hash(stream_id)                                       | pgbouncer + ro реплики                      | PITR: ежедневный base + WAL в S3 (CRR)                    |
+| MEDIA_OBJECT        | Postgres + S3      | S3: versioning + CRR; DB:                             | DB: pgbouncer + ro; Blob: CDN               | DB: PITR; S3 lifecycle 60 д → Glacier + CRR               |
+| SESSION             | Postgres           | range(expires_at день)                                | pgbouncer                                   | PITR: ежедневный base + WAL в S3 (CRR)                    |
+| CHANNEL_COUNTERS    | Redis              | Cluster hash slots; 1 реплика/шард                    | client-side routing                         | RDB hourly + AOF 1s → S3                                  |
+| STREAM_COUNTERS     | Redis + ClickHouse | Redis Cluster; CH: 2× шард, 2× реплика (ReplicatedMT) | Redis: client-side; CH: Distributed таблица | Redis: RDB/AOF → S3; CH: clickhouse-backup в S3 ежедневно |
+| VOD_COUNTERS        | Redis + ClickHouse | Redis Cluster; CH: 2× шард, 2× реплика (ReplicatedMT) | Redis: client-side; CH: Distributed таблица | Redis: RDB/AOF → S3; CH: clickhouse-backup в S3 ежедневно |
+| CLIP_COUNTERS       | Redis + ClickHouse | Redis Cluster; CH: 2× шард, 2× реплика (ReplicatedMT) | Redis: client-side; CH: Distributed таблица | Redis: RDB/AOF → S3; CH: clickhouse-backup в S3 ежедневно |
+
 
 
 
