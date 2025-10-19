@@ -307,20 +307,32 @@ TTL/накопление: VOD и чат-реплей живут до 60 дней
 
 | название таблицы    | база данных        | шардирование и резервирование                         | балансировка запросов                       | схема резервного копирования                              |
 | ------------------- | ------------------ | ----------------------------------------------------- | ------------------------------------------- | --------------------------------------------------------- |
-| USER_ACCOUNT        | Postgres           |                                                       | pgbouncer + ro реплики                      | PITR: ежедневный base + WAL в S3 (CRR)                    |
-| CHANNEL             | Postgres           |                                                       | pgbouncer + ro реплики                      | PITR: ежедневный base + WAL в S3 (CRR)                    |
-| SUBSCRIPTION        | Postgres           | hash(channel_id); per-shard sync standby              | pgbouncer + ro реплики                      | PITR: ежедневный base + WAL в S3 (CRR)                    |
-| STREAM              | Postgres           | range(started_at месяц)                               | pgbouncer + ro реплики                      | PITR: ежедневный base + WAL в S3 (CRR)                    |
+| USER_ACCOUNT        | Postgres           | | pgbouncer + read-only реплики              | PITR: ежедневный base + WAL в S3 (CRR)                    |
+| CHANNEL            | Postgres           |                                             | pgbouncer + read-only реплики               | PITR: ежедневный base + WAL в S3 (CRR)                |
+| SUBSCRIPTION       | Postgres          | hash(channel_id); per-shard sync standby        | pgbouncer + read-only реплики              | PITR: ежедневный base + WAL в S3 (CRR)                    |
+| STREAM             | Postgres           | range(started_at месяц)                             | pgbouncer + read-only реплики            | PITR: ежедневный base + WAL в S3 (CRR)                   |
 | RTMP_INGEST_SESSION | Postgres           | range(created_at день); авто-TTL 1–7 д                | pgbouncer                                   | PITR: ежедневный base + WAL в S3 (CRR)                    |
-| CHAT_MESSAGE        | ScyllaDB           | partition(stream_id); RF=3; multi-DC                  | token-aware, DC-aware round-robin           | snapshots + incremental sstables в S3                     |
+| CHAT_MESSAGE        | ScyllaDB           | partition(stream_id); RF = 3; multi-DC                  | token-aware, DC-aware round-robin           | snapshots + incremental sstables в S3                    |
 | VOD_ASSET           | Postgres           | range(created_at неделя); TTL 7–60 д                  | pgbouncer + ro реплики                      | PITR: ежедневный base + WAL в S3 (CRR)                    |
 | CLIP                | Postgres           | hash(stream_id)                                       | pgbouncer + ro реплики                      | PITR: ежедневный base + WAL в S3 (CRR)                    |
-| MEDIA_OBJECT        | Postgres + S3      | S3: versioning + CRR; DB:                             | DB: pgbouncer + ro; Blob: CDN               | DB: PITR; S3 lifecycle 60 д → Glacier + CRR               |
-| SESSION             | Postgres           | range(expires_at день)                                | pgbouncer                                   | PITR: ежедневный base + WAL в S3 (CRR)                    |
-| CHANNEL_COUNTERS    | Redis              | Cluster hash slots; 1 реплика/шард                    | client-side routing                         | RDB hourly + AOF 1s → S3                                  |
-| STREAM_COUNTERS     | Redis + ClickHouse | Redis Cluster; CH: 2× шард, 2× реплика (ReplicatedMT) | Redis: client-side; CH: Distributed таблица | Redis: RDB/AOF → S3; CH: clickhouse-backup в S3 ежедневно |
-| VOD_COUNTERS        | Redis + ClickHouse | Redis Cluster; CH: 2× шард, 2× реплика (ReplicatedMT) | Redis: client-side; CH: Distributed таблица | Redis: RDB/AOF → S3; CH: clickhouse-backup в S3 ежедневно |
-| CLIP_COUNTERS       | Redis + ClickHouse | Redis Cluster; CH: 2× шард, 2× реплика (ReplicatedMT) | Redis: client-side; CH: Distributed таблица | Redis: RDB/AOF → S3; CH: clickhouse-backup в S3 ежедневно |
+| MEDIA_OBJECT        | Postgres + S3      | S3: versioning + CRR;                         | DB: pgbouncer + ro; Blob: CDN               | DB: PITR; S3 lifecycle 60 д -> Glacier + CRR              |
+| SESSION             | Postgres           | range(expires_at день)                          | pgbouncer                                   | PITR: ежедневный base + WAL в S3 (CRR)                 |
+| CHANNEL_COUNTERS    | Redis              | Redis Cluster; 1 реплика/шард                    | client-side routing                         | RDB hourly + AOF 1s -> S3                               |
+| STREAM_COUNTERS     | Redis + ClickHouse | Redis Cluster; CH: 2 шарда, 2 реплики (ReplicatedMT) | Redis: client-side; CH: Distributed таблица | Redis: RDB/AOF -> S3; CH: clickhouse-backup в S3 ежедневно |
+| VOD_COUNTERS        | Redis + ClickHouse | Redis Cluster; CH: 2 шарда, 2 реплики (ReplicatedMT) | Redis: client-side; CH: Distributed таблица | Redis: RDB/AOF -> S3; CH: clickhouse-backup в S3 ежедневно |
+| CLIP_COUNTERS       | Redis + ClickHouse | Redis Cluster; CH: 2 шарда, 2 реплики (ReplicatedMT) | Redis: client-side; CH: Distributed таблица | Redis: RDB/AOF -> S3; CH: clickhouse-backup в S3 ежедневно |
+
+- Redis + ClickHouse - раз в какое-то время (например раз в час) агрегируются данные в Redis для отображения пользователям и в ClickHouse для аналитики и статистики. \
+- Postgres + S3 - в PostgresSQL хранятся данные и файлы и другая необходимая информация, а в S3 сам файл. \
+#### Обозначеия
+- per-shard sync standby - синхронная реплика не каждый шард
+- RF - количество реплик на мастер ноду
+- CRR - кроссрегиональная репликация
+- ReplicatedMT - ReplicatedMergeTree - репликация между репликами для Clickhouse
+- token-aware, DC-aware round-robin - посылки запрсов на нужный узел и распределение по round-robin в ДЦ
+- Glacier - переводим в ходное хранилище спустя 60 дней. При нехватке места можно будет удалить
+
+
 
 
 
