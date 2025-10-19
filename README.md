@@ -233,16 +233,17 @@
 <img width="1918" height="1454" alt="Untitled (2)" src="https://github.com/user-attachments/assets/c1353f0c-0f29-417a-ac4e-7eea56b67d9e" />
 
 ### Размеры полей
-| USER_ACCOUNT        | CHANNEL                | STREAM            | RTMP_INGEST_SESSION       | SUBSCRIPTION       | CHAT_MESSAGE      | MEDIA_OBJECT         | VOD_ASSET                | CLIP                  |
-| ------------------- | ---------------------- | ----------------- | ------------------------- | ------------------ | ----------------- | -------------------- | ------------------------ | --------------------- |
-| id (16 Б)           | id (16 Б)              | id (16 Б)         | id (16 Б)                 | follower_id (16 Б) | id (16 Б)         | id (16 Б)            | id (16 Б)               | id (16 Б)            |
-| email (255 Б)       | user_id (16 Б)         | channel_id (16 Б) | stream_id (16 Б)          | channel_id (16 Б)  | stream_id (16 Б)  | kind (1 Б)           | playlist_media_id (16 Б) | creator_id (16 Б)     |
-| username (32 Б)     | display_name (128 Б)   | title (128 Б)     | ingest_point (16 Б)       | created_at (8 Б)   | user_id (16 Б)    | storage_url (200 Б)  | stream_id (16 Б)        | stream_id (16 Б)      |
-| pass_hash (60 Б)    | stream_key_hash (60 Б) | status (1 Б)      | encoder_ip (16 Б)         |                    | offset_ms (8 Б)   | size_bytes (8 Б)     | playlist_media_id (16 Б) | start_ms (4 Б)        |
-| created_at (8 Б)    | is_partner (1 Б)       | started_at (8 Б)  | presented_key_hash (60 Б) |                    | content (280 Б)  | checksum (32 Б)       | duration_sec (4 Б)       | duration_ms (4 Б)     |
-| last_login_at (8 Б) | avatar_media_id (16 Б) | ended_at (8 Б)    | encoder_cfg (JSON, 64 Б)  |                    | meta (JSON, 64 Б) | extra (JSON, 64 Б)   | total_size_bytes (8 Б)   | video_media_id (16 Б) |
-|                     | banner_media_id (16 Б) | vod_enabled (1 Б) | started_at (8 Б)          |                    | created_at (8 Б)  | created_at (8 Б)     | created_at (8 Б)         | thumb_media_id (16 Б) |
-|                     | created_at (8 Б)       | tags (JSON, 64 Б) | ended_at (8 Б)            |                    |                   | ttl_expires_at (8 Б) |                          | created_at (8 Б)      |
+| USER_ACCOUNT        | CHANNEL                | STREAM            | RTMP_INGEST_SESSION       | SUBSCRIPTION       | CHAT_MESSAGE      | MEDIA_OBJECT         | VOD_ASSET                | CLIP                  | SESSION            |
+| ------------------- | ---------------------- | ----------------- | ------------------------- | ------------------ | ----------------- | -------------------- | ------------------------ | --------------------- | ------------------ |
+| id (16 Б)           | id (16 Б)              | id (16 Б)         | id (16 Б)                 | follower_id (16 Б) | id (16 Б)         | id (16 Б)            | id (16 Б)                | id (16 Б)             | id (16 Б)          |
+| email (255 Б)       | user_id (16 Б)         | channel_id (16 Б) | stream_id (16 Б)          | channel_id (16 Б)  | stream_id (16 Б)  | kind (1 Б)           | playlist_media_id (16 Б) | creator_id (16 Б)     | user_id (16 Б)     |
+| username (32 Б)     | display_name (128 Б)   | title (128 Б)     | ingest_point (16 Б)       | created_at (8 Б)   | user_id (16 Б)    | storage_url (200 Б)  | stream_id (16 Б)         | stream_id (16 Б)      | created_at (8 Б)   |
+| pass_hash (60 Б)    | stream_key_hash (60 Б) | status (1 Б)      | encoder_ip (16 Б)         |                    | offset_ms (8 Б)   | size_bytes (8 Б)     | playlist_media_id (16 Б) | start_ms (4 Б)        | last_seen_at (8 Б) |
+| created_at (8 Б)    | is_partner (1 Б)       | started_at (8 Б)  | presented_key_hash (60 Б) |                    | content (280 Б)   | checksum (32 Б)      | duration_sec (4 Б)       | duration_ms (4 Б)     | expires_at (8 Б)   |
+| last_login_at (8 Б) | avatar_media_id (16 Б) | ended_at (8 Б)    | encoder_cfg (JSON, 64 Б)  |                    | meta (JSON, 64 Б) | extra (JSON, 64 Б)   | total_size_bytes (8 Б)   | video_media_id (16 Б) |                    |
+|                     | banner_media_id (16 Б) | vod_enabled (1 Б) | started_at (8 Б)          |                    | created_at (8 Б)  | created_at (8 Б)     | created_at (8 Б)         | thumb_media_id (16 Б) |                    |
+|                     | created_at (8 Б)       | tags (JSON, 64 Б) | ended_at (8 Б)            |                    |                   | ttl_expires_at (8 Б) |                          | created_at (8 Б)      |                    |
+
 
 
 | CHANNEL_COUNTERS      | STREAM_COUNTERS     | VOD_COUNTERS         | CLIP_COUNTERS     |
@@ -255,42 +256,46 @@
 
 
 ### Рассчеты для таблиц
-| Сущность                | Вес записи | Строк/сутки (оценка) | Прирост/сутки | Примечания                                                                         |
-| ----------------------- | ---------: | -------------------: | ------------: | ---------------------------------------------------------------------------------- |
-| USER_ACCOUNT        |      379 Б |          500К | 190 МБ | Регистрации/день (0.5M)                                                           |
-| CHANNEL          |      261 Б |          500K | 130 МБ | Канал на пользователя                                                              |
-| SUBSCRIPTION        |       40 Б |       60M |  2.4 ГБ | 60M подписок/сутки                                                                 |
-| STREAM              |      242 Б |        1M |   240 МБ| Созданий стримов/сутки                                                             |
-| RTMP_INGEST_SESSION |      204 Б |        1M |   204 МБ | По одной+ на стрим                                                                 |
-| CHAT_MESSAGE        |      408 Б |       70M | 28.5 ГБ | <=255 симв., JSON-мета                                                              |
-| VOD_ASSET           |       84 Б |          500K |    42 МБ | VOD создают 50% стримов                                                           |
-| CLIP             |       96 Б |        5M |   480 МБ | 5M клипов/сутки                                                                   |
-| MEDIA_OBJECT       |      337 Б |      11M |  3.7 ГБ | Оценка: 2 на VOD (плейлист+превью) 1M/сутки + 2 на клип (видео+превью) 10M/сутки |
-| CHANNEL_COUNTERS |       32 Б |                 500K |         16 МБ | 1 запись на канал; рост = новые каналы; инкременты не увеличивают размер      |
-| STREAM_COUNTERS  |       36 Б |                   1M |         36 МБ | 1 запись на стрим; рост = новые стримы; апдейты «онлайна/чата» перезаписывают |
-| VOD_COUNTERS     |       40 Б |                 500K |         20 МБ | 1 запись на VOD; рост = новые VOD                                             |
-| CLIP_COUNTERS    |       32 Б |                   5M |        160 МБ | 1 запись на клип; рост = новые клипы                                          |
+| Сущность            | Вес записи | Строк/сутки (оценка) | Прирост/сутки | Примечания                                                                    |
+| ------------------- | ---------: | -------------------: | ------------: | ----------------------------------------------------------------------------- |
+| USER_ACCOUNT        |      379 Б |                 500К |        190 МБ | Регистрации/день (0.5M)                                                       |
+| CHANNEL             |      261 Б |                 500К |        130 МБ | Канал на пользователя                                                         |
+| SUBSCRIPTION        |       40 Б |                  60M |        2.4 ГБ | 60M подписок/сутки                                                            |
+| STREAM              |      242 Б |                   1M |        240 МБ | Созданий стримов/сутки                                                        |
+| RTMP_INGEST_SESSION |      204 Б |                   1M |        204 МБ | По одной+ на стрим                                                            |
+| CHAT_MESSAGE        |      408 Б |                  70M |       28.5 ГБ | ≤255 симв., JSON-мета                                                         |
+| VOD_ASSET           |       84 Б |                 500К |         42 МБ | VOD создают 50% стримов                                                       |
+| CLIP                |       96 Б |                   5M |        480 МБ | 5M клипов/сутки                                                               |
+| MEDIA_OBJECT        |      337 Б |                  11M |        3.7 ГБ | 2 на VOD (плейлист+превью) 1M/сутки + 2 на клип (видео+превью) 10M/сутки      |
+| CHANNEL_COUNTERS    |       32 Б |                 500К |         16 МБ | 1 запись на канал; рост = новые каналы; инкременты не увеличивают размер      |
+| STREAM_COUNTERS     |       36 Б |                   1M |         36 МБ | 1 запись на стрим; рост = новые стримы; апдейты «онлайна/чата» перезаписывают |
+| VOD_COUNTERS        |       40 Б |                 500К |         20 МБ | 1 запись на VOD                                                               |
+| CLIP_COUNTERS       |       32 Б |                   5M |        160 МБ | 1 запись на клип                                                              |
+| SESSION             |       56 Б |                 5.5M |        308 МБ | TTL 1 день; авто-очистка просроченных                                         |
+
 
 
 TTL/накопление: VOD и чат-реплей живут до 60 дней; клипы — бессрочно. \
 В хранилище из-за TTL: VOD_ASSET = 30M -> 2.5 ГБ метаданных; CHAT_MESSAGE = 408 Б -> 1.71 TB; MEDIA_OBJECT (только VOD-связанные, 2/стрим) = 60M -> 20 ГБ. Клип-объекты копятся без TTL 10M/сутки.
 
 ### QPS и консистентность
-| Cущность            | Read QPS | Write QPS | Консистентность |
-| ------------------- | -------: | --------: | --------------- |
-| USER_ACCOUNT        |       60 |         6 | strong     |
-| CHANNEL             |        5 |         6 | causal     |
-| SUBSCRIPTION        |      100 |       700 | strong    |
-| STREAM              |        5 |        12 | strong     |
-| RTMP_INGEST_SESSION |        – |        12 | strong   |
-| CHAT_MESSAGE        |       10 |       810 | causal   |
-| VOD_ASSET           |      0.1 |         6 | eventual   |
-| CLIP                |        1 |        60 | causal   |
-| MEDIA_OBJECT        |        2 |       120 | strong   |
-| CHANNEL_COUNTERS    |        5 |         – | eventual   |
-| STREAM_COUNTERS     |        5 |         – | eventual   |
-| VOD_COUNTERS        |      0.1 |         – | eventual   |
-| CLIP_COUNTERS       |        1 |         – | eventual    |
+| Cущность            | Read QPS | Write QPS | Консистентность |                                    Примечания |
+| ------------------- | -------: | --------: | --------------- | --------------------------------------------: |
+| USER_ACCOUNT        |       60 |         6 | **strong**      |                                               |
+| CHANNEL             |        5 |         6 | **causal**      |           В основном кэш 550 -> 5 (промах 1%) |
+| SUBSCRIPTION        |      100 |       700 | **strong**      |                                               |
+| STREAM              |        5 |        12 | **strong**      |                            Аналогично каналам |
+| RTMP_INGEST_SESSION |        – |        12 | **strong**      |                                               |
+| CHAT_MESSAGE        |       10 |       810 | **causal**      |                лайв в буфере; R: для VOD 1М |
+| VOD_ASSET           |      0.1 |         6 | **eventual**    |                      R: 10 -> 0.1 (промах 1%) |
+| CLIP                |        1 |        60 | **causal**      |                       R: 100 -> 1 (промах 1%) |
+| MEDIA_OBJECT        |        2 |       120 | **strong**      |         W: 2 на VOD + 2 на клип; R промах 1% |
+| CHANNEL_COUNTERS    |        5 |         – | **eventual**    |                                               |
+| STREAM_COUNTERS     |        5 |         – | **eventual**    |                                               |
+| VOD_COUNTERS        |      0.1 |         – | **eventual**    |                                               |
+| CLIP_COUNTERS       |        1 |         – | **eventual**    |                                               |
+| SESSION             |        5 |        64 | **strong**      | Чтение из кэша/JWT; БД — создание |
+
 
 
 
