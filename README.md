@@ -275,27 +275,23 @@
 TTL/накопление: VOD и чат-реплей живут до 60 дней; клипы — бессрочно. \
 В хранилище из-за TTL: VOD_ASSET = 30M -> 2.5 ГБ метаданных; CHAT_MESSAGE = 408 Б -> 1.71 TB; MEDIA_OBJECT (только VOD-связанные, 2/стрим) = 60M -> 20 ГБ. Клип-объекты копятся без TTL 10M/сутки.
 
-### QPS
-| Cущность                  | Read QPS | Write QPS | Примечания |
-| ----------------------- | -------------: | --------------: | ----------: |
-| USER_ACCOUNT        |            60 |              6 | |
-| CHANNEL             |           5 |              6 | В основном кэш 550 -> 5 (при промахе 1%) |
-| SUBSCRIPTION        |           100 |        700 | |
-| STREAM              |            5 |             12 | Аналогично каналам  |
-| RTMP_INGEST_SESSION |              - |             12 | |
-| CHAT_MESSAGE        |            10 |        810 | лайв в буфере; R: только для VOD 1М |
-| VOD_ASSET           |           0.1 |              6 | R: 10 -> 0.1 (при промахе 1%) |
-| CLIP                |            1 |             60 | R: 100 -> 1 (при промахе 1%)  |
-| MEDIA_OBJECT        |           2 |             120 | W: 2 на VOD + 2 на клип, R: 200 -> 2 (при промахе 1%) |
-| CHANNEL_COUNTERS |       5 |       - |  |
-| STREAM_COUNTERS  |        5 |       - |            |
-| VOD_COUNTERS     |      0.1 |        - |         |
-| CLIP_COUNTERS    |        1 |       - |                 |
+### QPS и консистентность
+| Cущность            | Read QPS | Write QPS | Консистентность |
+| ------------------- | -------: | --------: | --------------- |
+| USER_ACCOUNT        |       60 |         6 | strong     |
+| CHANNEL             |        5 |         6 | causal     |
+| SUBSCRIPTION        |      100 |       700 | strong    |
+| STREAM              |        5 |        12 | strong     |
+| RTMP_INGEST_SESSION |        – |        12 | strong   |
+| CHAT_MESSAGE        |       10 |       810 | causal   |
+| VOD_ASSET           |      0.1 |         6 | eventual   |
+| CLIP                |        1 |        60 | causal   |
+| MEDIA_OBJECT        |        2 |       120 | strong   |
+| CHANNEL_COUNTERS    |        5 |         – | eventual   |
+| STREAM_COUNTERS     |        5 |         – | eventual   |
+| VOD_COUNTERS        |      0.1 |         – | eventual   |
+| CLIP_COUNTERS       |        1 |         – | eventual    |
 
-
-### Требования консистентности
-- Strong - на все сущности
-- Eventual - на счетчики: CHANNEL_COUNTERS, STREAM_COUNTERS, VOD_COUNTERS, CLIP_COUNTERS
 
 
 ## Список источников
