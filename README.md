@@ -299,6 +299,8 @@ TTL/накопление: VOD и чат-реплей живут до 60 дней
 
 
 
+
+
 ## Список источников
 [^1]: https://help.twitch.tv/s/article/video-on-demand 
 [^2]: https://resourcera.com/data/social/twitch-statistics/
