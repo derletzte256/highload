@@ -317,7 +317,7 @@ TTL/накопление: VOD и чат-реплей живут до 60 дней
 | CLIP                | Postgres           | hash(stream_id)                                       | pgbouncer + ro реплики                      | PITR: ежедневный base + WAL в S3 (CRR)                    |
 | MEDIA_OBJECT        | Postgres + S3      | S3: versioning + CRR;                         | DB: pgbouncer + ro; Blob: CDN               | DB: PITR; S3 lifecycle 60 д -> Glacier + CRR              |
 | SESSION             | Postgres           | range(expires_at день)                       | pgbouncer                                   | PITR: ежедневный base + WAL в S3 (CRR)                 |
-| CHANNEL_COUNTERS    | Redis              | Redis Cluster; 1 реплика/шард             | client-side routing                         | RDB hourly + AOF 1s -> S3                               |
+| CHANNEL_COUNTERS    | Redis              | Redis Cluster;             | client-side routing                         | RDB hourly + AOF 1s -> S3                               |
 | STREAM_COUNTERS     | Redis + ClickHouse | Redis Cluster; CH: ReplicatedMT | Redis: client-side; CH: Distributed таблица | Redis: RDB/AOF -> S3; CH: clickhouse-backup в S3 ежедневно |
 | VOD_COUNTERS        | Redis + ClickHouse | Redis Cluster; CH: ReplicatedMТ | Redis: client-side; CH: Distributed таблица | Redis: RDB/AOF -> S3; CH: clickhouse-backup в S3 ежедневно |
 | CLIP_COUNTERS       | Redis + ClickHouse | Redis Cluster; CH: ReplicatedMT | Redis: client-side; CH: Distributed таблица | Redis: RDB/AOF -> S3; CH: clickhouse-backup в S3 ежедневно |
