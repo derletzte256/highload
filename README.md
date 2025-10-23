@@ -258,20 +258,20 @@
 ### Рассчеты для таблиц
 | Сущность            | Вес записи | Строк/сутки (оценка) | Прирост/сутки | Примечания                                                                    |
 | ------------------- | ---------: | -------------------: | ------------: | ----------------------------------------------------------------------------- |
-| USER_ACCOUNT        |      379 Б |                 500К |        190 МБ | Регистрации/день (0.5M)                                                       |
-| CHANNEL             |      261 Б |                 500К |        130 МБ | Канал на пользователя                                                         |
-| SUBSCRIPTION        |       40 Б |                  60M |        2.4 ГБ | 60M подписок/сутки                                                            |
-| STREAM              |      242 Б |                   1M |        240 МБ | Созданий стримов/сутки                                                        |
-| RTMP_INGEST_SESSION |      204 Б |                   1M |        204 МБ | По одной+ на стрим                                                            |
-| CHAT_MESSAGE        |      408 Б |                  70M |       28.5 ГБ | ≤255 симв., JSON-мета                                                         |
-| VOD_ASSET           |       84 Б |                 500К |         42 МБ | VOD создают 50% стримов                                                       |
-| CLIP                |       96 Б |                   5M |        480 МБ | 5M клипов/сутки                                                               |
-| MEDIA_OBJECT        |      337 Б |                  11M |        3.7 ГБ | 2 на VOD (плейлист+превью) 1M/сутки + 2 на клип (видео+превью) 10M/сутки      |
-| CHANNEL_COUNTERS    |       32 Б |                 500К |         16 МБ | 1 запись на канал; рост = новые каналы; инкременты не увеличивают размер      |
-| STREAM_COUNTERS     |       36 Б |                   1M |         36 МБ | 1 запись на стрим; рост = новые стримы; апдейты «онлайна/чата» перезаписывают |
-| VOD_COUNTERS        |       40 Б |                 500К |         20 МБ | 1 запись на VOD                                                               |
-| CLIP_COUNTERS       |       32 Б |                   5M |        160 МБ | 1 запись на клип                                                              |
-| SESSION             |       56 Б |                 5.5M |        308 МБ | TTL 1 день; авто-очистка просроченных                                         |
+| USER_ACCOUNT        |      379 Б |                 500К |        190 МБ | Регистрации/день (0.5M)                                  |
+| CHANNEL             |      261 Б |                 500К |        130 МБ | Канал на пользователя                                     |
+| SUBSCRIPTION        |       40 Б |            60M |        2.4 ГБ | 60M подписок/сутки                                        |
+| STREAM              |      242 Б |                   1M |        240 МБ | Созданий стримов/сутки                                        |
+| RTMP_INGEST_SESSION |      204 Б |          1M |        204 МБ | По одной+ на стрим                                                |
+| CHAT_MESSAGE        |      408 Б |                  70M |       28.5 ГБ | <=255 симв., JSON-мета                               |
+| VOD_ASSET           |       84 Б |                 500К |         42 МБ | VOD создают 50% стримов                            |
+| CLIP                |       96 Б |              5M |        480 МБ | 5M клипов/сутки                             |
+| MEDIA_OBJECT        |      337 Б |                  11M |        3.7 ГБ | 2 на VOD (плейлист+превью) 1M/сутки + 2 на клип (видео+превью) 10M/сутки    |
+| CHANNEL_COUNTERS    |       32 Б |          500К |         16 МБ | 1 запись на канал; рост = новые каналы; инкременты не увеличивают размер  |
+| STREAM_COUNTERS     |       36 Б |                   1M |         36 МБ | 1 запись на стрим; рост = новые стримы; апдейты "онлайна/чата" перезаписывают |
+| VOD_COUNTERS        |       40 Б |            500К |    20 МБ | 1 запись на VOD                                  |
+| CLIP_COUNTERS       |       32 Б |                   5M |        160 МБ | 1 запись на клип                                     |
+| SESSION             |       56 Б |         5.5M |        308 МБ | TTL 1 день; авто-очистка просроченных                                         |
 
 
 
@@ -316,11 +316,11 @@ TTL/накопление: VOD и чат-реплей живут до 60 дней
 | VOD_ASSET           | Postgres           | range(created_at неделя); TTL 7–60 д                  | pgbouncer + ro реплики                      | PITR: ежедневный base + WAL в S3 (CRR)                    |
 | CLIP                | Postgres           | hash(stream_id)                                       | pgbouncer + ro реплики                      | PITR: ежедневный base + WAL в S3 (CRR)                    |
 | MEDIA_OBJECT        | Postgres + S3      | S3: versioning + CRR;                         | DB: pgbouncer + ro; Blob: CDN               | DB: PITR; S3 lifecycle 60 д -> Glacier + CRR              |
-| SESSION             | Postgres           | range(expires_at день)| pgbouncer                                   | PITR: ежедневный base + WAL в S3 (CRR)                 |
+| SESSION             | Postgres           | range(expires_at день)                       | pgbouncer                                   | PITR: ежедневный base + WAL в S3 (CRR)                 |
 | CHANNEL_COUNTERS    | Redis              | Redis Cluster; 1 реплика/шард             | client-side routing                         | RDB hourly + AOF 1s -> S3                               |
-| STREAM_COUNTERS     | Redis + ClickHouse | Redis Cluster; CH: 2 шарда, 2 реплики (ReplicatedMT) | Redis: client-side; CH: Distributed таблица | Redis: RDB/AOF -> S3; CH: clickhouse-backup в S3 ежедневно |
-| VOD_COUNTERS        | Redis + ClickHouse | Redis Cluster; CH: 2 шарда, 2 реплики (ReplicatedMT) | Redis: client-side; CH: Distributed таблица | Redis: RDB/AOF -> S3; CH: clickhouse-backup в S3 ежедневно |
-| CLIP_COUNTERS       | Redis + ClickHouse | Redis Cluster; CH: 2 шарда, 2 реплики (ReplicatedMT) | Redis: client-side; CH: Distributed таблица | Redis: RDB/AOF -> S3; CH: clickhouse-backup в S3 ежедневно |
+| STREAM_COUNTERS     | Redis + ClickHouse | Redis Cluster; CH: ReplicatedMT | Redis: client-side; CH: Distributed таблица | Redis: RDB/AOF -> S3; CH: clickhouse-backup в S3 ежедневно |
+| VOD_COUNTERS        | Redis + ClickHouse | Redis Cluster; CH: ReplicatedMТ | Redis: client-side; CH: Distributed таблица | Redis: RDB/AOF -> S3; CH: clickhouse-backup в S3 ежедневно |
+| CLIP_COUNTERS       | Redis + ClickHouse | Redis Cluster; CH: ReplicatedMT | Redis: client-side; CH: Distributed таблица | Redis: RDB/AOF -> S3; CH: clickhouse-backup в S3 ежедневно |
 
 - Redis + ClickHouse - раз в какое-то время (например раз в час) агрегируются данные в Redis для отображения пользователям и в ClickHouse для аналитики и статистики. \
 - Postgres + S3 - в PostgresSQL хранятся данные и файлы и другая необходимая информация, а в S3 сам файл. \
