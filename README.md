@@ -313,10 +313,10 @@ TTL/накопление: VOD и чат-реплей живут до 60 дней
 | STREAM             | Postgres           | range(started_at месяц) на каждый шард есть реплики (по аналогии)                            | pgbouncer + read-only реплики            | PITR: ежедневный base + WAL в S3 (CRR)                   |
 | RTMP_INGEST_SESSION | Postgres           | range(created_at день); авто-TTL 1–7 д, на каждый шард есть реплики (по аналогии)                | pgbouncer                                   | PITR: ежедневный base + WAL в S3 (CRR)                    |
 | CHAT_MESSAGE        | ScyllaDB           | partition(stream_id) order(offset-ms) - используется для получения сообщений в чате для VOD батчами; RF = 3;  на каждый шард есть реплики (по аналогии)               | token-aware, DC-aware round-robin           | snapshots + incremental sstables в S3                    |
-| VOD_ASSET           | Postgres           | range(created_at неделя); TTL 7–60 д                  | pgbouncer + ro реплики                      | PITR: ежедневный base + WAL в S3 (CRR)                    |
-| CLIP                | Postgres           | hash(stream_id)                                       | pgbouncer + ro реплики                      | PITR: ежедневный base + WAL в S3 (CRR)                    |
+| VOD_ASSET           | Postgres           | range(created_at неделя); TTL 7–60 д, на каждый шард есть реплики (по аналогии)               | pgbouncer + ro реплики                      | PITR: ежедневный base + WAL в S3 (CRR)                    |
+| CLIP                | Postgres           | hash(stream_id), на каждый шард есть реплики (по аналогии)                               | pgbouncer + ro реплики                      | PITR: ежедневный base + WAL в S3 (CRR)                    |
 | MEDIA_OBJECT        | Postgres + S3      | S3: versioning + CRR;                         | DB: pgbouncer + ro; Blob: CDN               | DB: PITR; S3 lifecycle 60 д -> Glacier + CRR              |
-| SESSION             | Postgres           | range(expires_at день)                       | pgbouncer                                   | PITR: ежедневный base + WAL в S3 (CRR)                 |
+| SESSION             | Postgres           | range(expires_at день),               | pgbouncer                                   | PITR: ежедневный base + WAL в S3 (CRR)                 |
 | CHANNEL_COUNTERS    | Redis              | Redis Cluster;             | client-side routing                         | RDB hourly + AOF 1s -> S3                               |
 | STREAM_COUNTERS     | Redis + ClickHouse | Redis Cluster; CH: ReplicatedMT | Redis: client-side; CH: Distributed таблица | Redis: RDB/AOF -> S3; CH: clickhouse-backup в S3 ежедневно |
 | VOD_COUNTERS        | Redis + ClickHouse | Redis Cluster; CH: ReplicatedMТ | Redis: client-side; CH: Distributed таблица | Redis: RDB/AOF -> S3; CH: clickhouse-backup в S3 ежедневно |
@@ -360,6 +360,44 @@ TTL/накопление: VOD и чат-реплей живут до 60 дней
 - go-redis - Redis
 - clickhouse-go - ClickHouse
 - aws-sdk-go/s3 - S3
+
+## Алгоритмы
+
+### Алгоритм рекомендаций
+Мотивация - слишком долгая загрузка главной страницы для юзера
+
+#### Используемые сущности
+| Сущность | Получаемые данные |
+| -------- | ----------------- |
+| USER_ACCOUNT | базовые атрибуты |
+| CHANNEL | базовые атрибуты |
+| SUBSCRIPTION | граф подписок для коллаборативной фильтрации |
+| STREAM | стримы запущенные в данный момент |
+
+#### Кеши
+| Кэш | Тип              | Описание |
+| ---- | ----------------- | ----------- |
+| follow:{uid}  | SET | Каналы на которые подписан пользователь, обновляем раз в 10 минут |
+| live:channels | ZSET (channel_id -> base_score) | текущие каналы в лайве, где base_score = log1p(viewers), обвляется каждые 5с на основе STREAM_COUNTERS |
+| entity:stream:{stream_id} | HASH | данные карточки стрима, TTL - 5 минут |
+| sim:channel:{channel_id} | ZSET | похожие каналы по ко-фоллоу, храним топ-10 похожих для каждого канала, TTL - 24 часа |
+
+
+#### Этапы алгоритма
+| Этап | Описание | Количество кандидатов |
+| ---- | ----------------- | ---- |
+| Follow | из кэша пересечение лайв каналов и те, что в подписках у пользователя | 100 |
+| Ко-фоллоу (оффлайн) | на основе векторов, где мы можем посчитать сходимость меры Жаккара для уже подписанных с остальными каналами. Исходя из этого для каждого канала в sim:channel:{channel_id} сохраняем похожие | 10 (на каждый канал) |
+| Ко-фоллоу (онлайн) | Получаем из всех подписанных похожие на основе кэша ко-фоллоу | ---- |
+| Ранжирование | рассчет по формуле score для всех кандидатов и сортировка | ---- |
+
+$$score = 2.5*is_follow + 0.35*log1p(viewers_now) + 0.25*Δviewers_5m + 1.0*sim_cfollow + 0.10*partner_boost + 0.20*novelty + 0.05*locale_match $$
+
+
+
+
+
+
 
 ## Список источников
 [^1]: https://help.twitch.tv/s/article/video-on-demand 
